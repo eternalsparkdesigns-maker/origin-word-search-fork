@@ -66,3 +66,22 @@ pushed on Mondays; one push carries all 16 weeks.
   re-packing; a test keeps the two in sync.
 - Grid fill retries up to 50 times until every word is placed (the original could silently drop a
   word, leaving the puzzle impossible to finish).
+
+## Load size (keep the design-system bundle out)
+
+A claude.ai/design export also packs the whole Origin design-system bundle: about 3 MB of
+JavaScript, including saved copies of the booking flow's `gtm.js`, `fbevents.js` and
+`analytics.js`. The game uses none of it. Left in, it nearly doubled the page (1.95 MB to
+1.03 MB without it), made the game take about 2.5 s instead of 1.6 s to appear (4x-slowed
+CPU, Fast 4G), and started Google Tag Manager and an Ours Privacy tracking call on every open.
+
+After any re-export or re-pack, run:
+
+```
+cd edit && python3 prune.py ../index.html     # drops the DS bundle + any unused asset
+```
+
+`prune.py` removes the bundle's `<script>` tag from the template and deletes every manifest
+asset the template and `ext_resources` don't reference. Fonts and React stay. It is safe to
+run twice. `test_bundle_size.py` fails if the bundle, any tracking code or an unused asset
+comes back, if the page goes over 1.2 MB, or if the template points at an asset that's missing.
